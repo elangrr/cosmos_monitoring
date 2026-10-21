@@ -1,0 +1,65 @@
+groups:
+  - name: cosmos
+    rules:
+      - alert: CosmosNodeStalled
+        expr: max by (chain_id) (increase(cometbft_consensus_height{job="cosmos"}[10m])) == 0
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.chain_id }}: no new block for 15 min"
+
+      - alert: CosmosMetricsDown
+        expr: up{job=~"cosmos|node"} == 0
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.node }}: metrics endpoint down for 5 min (node stopped?)"
+
+      - alert: CosmosNodeCatchingUp
+        expr: max by (chain_id) (cometbft_blocksync_syncing{job="cosmos"}) == 1
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.chain_id }}: node has been catching up for 15 min"
+
+      - alert: CosmosLowPeers
+        expr: max by (chain_id) (cometbft_p2p_peers{job="cosmos"}) < 3
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.chain_id }}: only {{ $value }} peers for 15 min"
+
+      - alert: ValidatorNotSigning
+        expr: max by (chain_id) (cometbft_consensus_latest_block_height{job="cosmos"}) - on(chain_id) max by (chain_id) (cometbft_consensus_validator_last_signed_height{job="cosmos"}) > 10
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.chain_id }}: validator last signed {{ $value }} blocks ago"
+
+      - alert: ValidatorMissingBlocks
+        expr: max by (chain_id) (increase(cometbft_consensus_validator_missed_blocks{job="cosmos"}[5m])) > 20
+        for: 0m
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.chain_id }}: validator missed {{ $value }} blocks in 5 min"
+
+      - alert: CosmosSlowConsensus
+        expr: max by (chain_id) (cometbft_consensus_rounds{job="cosmos"}) > 2
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.chain_id }}: blocks need more than 2 consensus rounds (network trouble?)"
+
+      - alert: DiskFillingUp
+        expr: predict_linear(node_filesystem_avail_bytes{job="node", mountpoint="/"}[6h], 3*24*3600) < 0
+        for: 30m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.node }}: disk / will be full within 3 days at the current rate"
+
+      - alert: DiskAlmostFull
+        expr: 100 * (1 - node_filesystem_avail_bytes{job="node", mountpoint="/"} / node_filesystem_size_bytes{job="node", mountpoint="/"}) > 90
+        for: 10m
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.node }}: disk / is over 90% full"

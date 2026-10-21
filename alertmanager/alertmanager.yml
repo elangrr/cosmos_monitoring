@@ -1,0 +1,17 @@
+# Alertmanager: sends alerts to Telegram.
+# 1. Put your bot token (from @BotFather) in secrets/telegram_bot_token (one line, nothing else).
+# 2. Replace <YOUR_TELEGRAM_CHAT_ID> below with your chat id (a number; group ids start with -100).
+route:
+  receiver: telegram
+  group_by: ["alertname", "chain_id"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: telegram
+    telegram_configs:
+      - bot_token_file: /etc/alertmanager/telegram_bot_token
+        chat_id: <YOUR_TELEGRAM_CHAT_ID>
+        parse_mode: HTML
+        send_resolved: true

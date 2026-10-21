@@ -1,0 +1,745 @@
+{
+ "uid": "cosmos-monitoring",
+ "title": "Cosmos SDK nodes",
+ "tags": [
+  "cosmos",
+  "cometbft",
+  "validator"
+ ],
+ "timezone": "browser",
+ "refresh": "30s",
+ "time": {
+  "from": "now-6h",
+  "to": "now"
+ },
+ "schemaVersion": 39,
+ "templating": {
+  "list": [
+   {
+    "name": "chain",
+    "label": "Chain",
+    "type": "query",
+    "datasource": {
+     "type": "prometheus",
+     "uid": "cm-prometheus"
+    },
+    "query": "label_values(cometbft_consensus_height{job=\"cosmos\"}, chain_id)",
+    "refresh": 2,
+    "multi": true,
+    "includeAll": true,
+    "current": {
+     "text": "All",
+     "value": "$__all"
+    }
+   }
+  ]
+ },
+ "panels": [
+  {
+   "id": 100,
+   "type": "row",
+   "title": "Cosmos SDK nodes: health",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 1
+   }
+  },
+  {
+   "id": 1,
+   "type": "stat",
+   "title": "Block height",
+   "gridPos": {
+    "x": 0,
+    "y": 1,
+    "w": 8,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "options": {
+    "colorMode": "none",
+    "graphMode": "area",
+    "textMode": "value_and_name"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "decimals": 0
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (cometbft_consensus_height{job=\"cosmos\", chain_id=~\"$chain\"})",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "type": "stat",
+   "title": "Catching up (1 = still syncing)",
+   "gridPos": {
+    "x": 8,
+    "y": 1,
+    "w": 5,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "options": {
+    "colorMode": "background",
+    "textMode": "value_and_name"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 1
+       }
+      ]
+     }
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (cometbft_blocksync_syncing{job=\"cosmos\", chain_id=~\"$chain\"})",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "type": "stat",
+   "title": "Peers",
+   "gridPos": {
+    "x": 13,
+    "y": 1,
+    "w": 5,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "options": {
+    "colorMode": "value",
+    "textMode": "value_and_name"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 3
+       },
+       {
+        "color": "green",
+        "value": 8
+       }
+      ]
+     }
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (cometbft_p2p_peers{job=\"cosmos\", chain_id=~\"$chain\"})",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "type": "stat",
+   "title": "Validators in active set",
+   "gridPos": {
+    "x": 18,
+    "y": 1,
+    "w": 6,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "options": {
+    "colorMode": "none",
+    "textMode": "value_and_name"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (cometbft_consensus_validators{job=\"cosmos\", chain_id=~\"$chain\"})",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 101,
+   "type": "row",
+   "title": "Your validator (only for chains where this node signs)",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 1
+   }
+  },
+  {
+   "id": 10,
+   "type": "stat",
+   "title": "Blocks since your last signature",
+   "gridPos": {
+    "x": 0,
+    "y": 6,
+    "w": 6,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "options": {
+    "colorMode": "background",
+    "textMode": "value_and_name"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "decimals": 0,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 3
+       },
+       {
+        "color": "red",
+        "value": 10
+       }
+      ]
+     }
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (cometbft_consensus_latest_block_height{job=\"cosmos\", chain_id=~\"$chain\"}) - on(chain_id) max by (chain_id) (cometbft_consensus_validator_last_signed_height{job=\"cosmos\", chain_id=~\"$chain\"})",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 11,
+   "type": "stat",
+   "title": "Missed blocks, last 24h",
+   "gridPos": {
+    "x": 6,
+    "y": 6,
+    "w": 6,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "options": {
+    "colorMode": "value",
+    "textMode": "value_and_name"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "decimals": 0,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 10
+       },
+       {
+        "color": "red",
+        "value": 100
+       }
+      ]
+     }
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (increase(cometbft_consensus_validator_missed_blocks{job=\"cosmos\", chain_id=~\"$chain\"}[24h]))",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 12,
+   "type": "stat",
+   "title": "Your voting power share",
+   "gridPos": {
+    "x": 12,
+    "y": 6,
+    "w": 6,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "options": {
+    "colorMode": "none",
+    "textMode": "value_and_name"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "decimals": 3
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "100 * max by (chain_id) (cometbft_consensus_validator_power{job=\"cosmos\", chain_id=~\"$chain\"}) / on(chain_id) max by (chain_id) (cometbft_consensus_validators_power{job=\"cosmos\", chain_id=~\"$chain\"})",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 13,
+   "type": "stat",
+   "title": "Voting power of offline validators (network)",
+   "gridPos": {
+    "x": 18,
+    "y": 6,
+    "w": 6,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "options": {
+    "colorMode": "value",
+    "textMode": "value_and_name"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "decimals": 1,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 10
+       },
+       {
+        "color": "red",
+        "value": 30
+       }
+      ]
+     }
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "100 * max by (chain_id) (cometbft_consensus_missing_validators_power{job=\"cosmos\", chain_id=~\"$chain\"}) / on(chain_id) max by (chain_id) (cometbft_consensus_validators_power{job=\"cosmos\", chain_id=~\"$chain\"})",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 14,
+   "type": "timeseries",
+   "title": "Missed blocks per hour",
+   "gridPos": {
+    "x": 0,
+    "y": 10,
+    "w": 24,
+    "h": 6
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "drawStyle": "bars",
+      "fillOpacity": 60
+     }
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (increase(cometbft_consensus_validator_missed_blocks{job=\"cosmos\", chain_id=~\"$chain\"}[1h]))",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 102,
+   "type": "row",
+   "title": "Cosmos SDK nodes: consensus and performance",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 1
+   }
+  },
+  {
+   "id": 20,
+   "type": "timeseries",
+   "title": "Blocks per minute (0 = stalled)",
+   "gridPos": {
+    "x": 0,
+    "y": 17,
+    "w": 8,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (rate(cometbft_consensus_height{job=\"cosmos\", chain_id=~\"$chain\"}[5m])) * 60",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 21,
+   "type": "timeseries",
+   "title": "Average block time",
+   "gridPos": {
+    "x": 8,
+    "y": 17,
+    "w": 8,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (rate(cometbft_consensus_block_interval_seconds_sum{job=\"cosmos\", chain_id=~\"$chain\"}[10m]) / rate(cometbft_consensus_block_interval_seconds_count{job=\"cosmos\", chain_id=~\"$chain\"}[10m]))",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 22,
+   "type": "timeseries",
+   "title": "Consensus rounds (above 0 = slow or contested blocks)",
+   "gridPos": {
+    "x": 16,
+    "y": 17,
+    "w": 8,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (cometbft_consensus_rounds{job=\"cosmos\", chain_id=~\"$chain\"})",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 23,
+   "type": "timeseries",
+   "title": "Transactions per block",
+   "gridPos": {
+    "x": 0,
+    "y": 24,
+    "w": 8,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (cometbft_consensus_num_txs{job=\"cosmos\", chain_id=~\"$chain\"})",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 24,
+   "type": "timeseries",
+   "title": "Block processing time (app execution)",
+   "gridPos": {
+    "x": 8,
+    "y": 24,
+    "w": 8,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "ms"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (rate(cometbft_state_block_processing_time_sum{job=\"cosmos\", chain_id=~\"$chain\"}[10m]) / rate(cometbft_state_block_processing_time_count{job=\"cosmos\", chain_id=~\"$chain\"}[10m]))",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 25,
+   "type": "timeseries",
+   "title": "Mempool: size and failed txs/min",
+   "gridPos": {
+    "x": 16,
+    "y": 24,
+    "w": 8,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (cometbft_mempool_size{job=\"cosmos\", chain_id=~\"$chain\"})",
+     "legendFormat": "{{chain_id}} size"
+    },
+    {
+     "refId": "B",
+     "expr": "max by (chain_id) (rate(cometbft_mempool_failed_txs{job=\"cosmos\", chain_id=~\"$chain\"}[5m])) * 60",
+     "legendFormat": "{{chain_id}} failed/min"
+    }
+   ]
+  },
+  {
+   "id": 26,
+   "type": "timeseries",
+   "title": "P2P traffic",
+   "gridPos": {
+    "x": 0,
+    "y": 31,
+    "w": 12,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "Bps"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (chain_id) (rate(cometbft_p2p_peer_receive_bytes_total{job=\"cosmos\", chain_id=~\"$chain\"}[5m]))",
+     "legendFormat": "{{chain_id}} in"
+    },
+    {
+     "refId": "B",
+     "expr": "-sum by (chain_id) (rate(cometbft_p2p_peer_send_bytes_total{job=\"cosmos\", chain_id=~\"$chain\"}[5m]))",
+     "legendFormat": "{{chain_id}} out"
+    }
+   ]
+  },
+  {
+   "id": 27,
+   "type": "timeseries",
+   "title": "Chain data size",
+   "gridPos": {
+    "x": 12,
+    "y": 31,
+    "w": 12,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (chain_id) (cometbft_consensus_chain_size_bytes{job=\"cosmos\", chain_id=~\"$chain\"})",
+     "legendFormat": "{{chain_id}}"
+    }
+   ]
+  },
+  {
+   "id": 105,
+   "type": "row",
+   "title": "Server",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 1
+   }
+  },
+  {
+   "id": 50,
+   "type": "timeseries",
+   "title": "CPU used %",
+   "gridPos": {
+    "x": 0,
+    "y": 39,
+    "w": 8,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "max": 100
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "100 - avg(rate(node_cpu_seconds_total{job=\"node\", mode=\"idle\"}[5m])) * 100",
+     "legendFormat": "cpu"
+    }
+   ]
+  },
+  {
+   "id": 51,
+   "type": "timeseries",
+   "title": "Memory used %",
+   "gridPos": {
+    "x": 8,
+    "y": 39,
+    "w": 8,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "max": 100
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=\"node\"} / node_memory_MemTotal_bytes{job=\"node\"})",
+     "legendFormat": "mem"
+    }
+   ]
+  },
+  {
+   "id": 52,
+   "type": "gauge",
+   "title": "Disk used % (/)",
+   "gridPos": {
+    "x": 16,
+    "y": 39,
+    "w": 8,
+    "h": 7
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "cm-prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "max": 100,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 80
+       },
+       {
+        "color": "red",
+        "value": 90
+       }
+      ]
+     }
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "100 * (1 - node_filesystem_avail_bytes{job=\"node\", mountpoint=\"/\"} / node_filesystem_size_bytes{job=\"node\", mountpoint=\"/\"})",
+     "legendFormat": "/"
+    }
+   ]
+  }
+ ]
+}
