@@ -68,7 +68,7 @@ cp .env.example .env
 Check the Prometheus config before starting:
 
 ```bash
-docker run --rm -v "$PWD/prometheus:/etc/prometheus:ro" --entrypoint promtool prom/prometheus:v3.5.0 check config /etc/prometheus/prometheus.yml
+docker run --rm -v "$PWD/prometheus:/etc/prometheus:ro" --entrypoint promtool prom/prometheus:v3.15.1 check config /etc/prometheus/prometheus.yml
 ```
 
 ### 4. Start

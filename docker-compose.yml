@@ -3,7 +3,7 @@
 # host networking lets Prometheus reach node metrics ports on the same server.
 services:
   prometheus:
-    image: prom/prometheus:v3.5.0
+    image: prom/prometheus:v3.15.1
     container_name: cm-prometheus
     network_mode: host
     command:
@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
 
   alertmanager:
-    image: prom/alertmanager:v0.28.1
+    image: prom/alertmanager:v0.34.1
     container_name: cm-alertmanager
     network_mode: host
     command:
@@ -33,7 +33,7 @@ services:
     restart: unless-stopped
 
   node-exporter:
-    image: prom/node-exporter:v1.9.1
+    image: prom/node-exporter:v1.12.1
     container_name: cm-node-exporter
     network_mode: host
     pid: host
@@ -45,7 +45,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:12.1.0
+    image: grafana/grafana:13.2.4
     container_name: cm-grafana
     network_mode: host
     environment:
