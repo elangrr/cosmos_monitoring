@@ -1,0 +1,18 @@
+[Unit]
+Description=rpc-prober: check public RPCs, write node-exporter textfile
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=rpcprober
+Group=rpcprober
+# Exit code 1 (a chain unhealthy) still prints all metrics; only exit code 2 (bad config) skips the update.
+ExecStart=/bin/sh -c '/usr/local/bin/rpc-prober -c /etc/rpc-prober/config.toml --prom > /var/lib/node_exporter/textfile/rpc.prom.tmp; rc=$?; [ $rc -le 1 ] && mv /var/lib/node_exporter/textfile/rpc.prom.tmp /var/lib/node_exporter/textfile/rpc.prom; exit 0'
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/node_exporter/textfile
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+TimeoutStartSec=60

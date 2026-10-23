@@ -24,6 +24,9 @@ Monitoring for **Cosmos SDK nodes and validators**: Prometheus, Grafana and Aler
 | ValidatorMissingBlocks | more than 20 missed blocks in 5 min |
 | CosmosSlowConsensus | blocks need more than 2 rounds for 10 min |
 | DiskFillingUp / DiskAlmostFull | disk full within 3 days / over 90% |
+| PublicRpcDown | your public RPC gives no block height for 5 min (optional, needs rpc-prober) |
+| PublicRpcBehind | your public RPC is more than 50 blocks behind other operators for 10 min (optional) |
+| RpcProberStale | rpc-prober stopped writing results (optional) |
 
 Everything uses the standard CometBFT metrics, so it works for any Cosmos SDK chain (CometBFT 0.37+). The validator panels only show data on chains where the node is a signing validator.
 
@@ -106,6 +109,66 @@ docker compose restart prometheus
 ```
 
 The new chain appears in the dashboard's **Chain** filter by its `chain_id`.
+
+## Watching your public RPCs (optional)
+
+The node metrics above come from inside the node. They do not tell you whether your **public** RPC
+(`https://rpc.<chain>.yourdomain.com`) works for users: a broken proxy, an expired certificate or a
+DNS mistake all look fine from inside. [rpc-prober](https://github.com/elangrr/rpc-prober) checks the
+public URL every minute, compares its block height with other operators' RPCs and hands the result to
+Prometheus through node-exporter's textfile collector.
+
+### 1. Install rpc-prober
+
+Needs Rust (https://rustup.rs):
+
+```bash
+git clone https://github.com/elangrr/rpc-prober.git
+cd rpc-prober && cargo build --release --locked
+sudo install -m 755 target/release/rpc-prober /usr/local/bin/rpc-prober
+```
+
+### 2. Config
+
+```bash
+sudo mkdir -p /etc/rpc-prober
+sudo cp rpc-prober/config.toml.example /etc/rpc-prober/config.toml   # from this repo
+sudo nano /etc/rpc-prober/config.toml                               # your RPCs + 1-2 reference RPCs per chain
+rpc-prober -c /etc/rpc-prober/config.toml                            # test: prints a table
+```
+
+Example output:
+
+```
+CHAIN     TYPE    ENDPOINT                                STATUS         HEIGHT  BEHIND  LATENCY  ERROR
+atomone   cosmos  https://atomone-rpc.allinbits.services  ok           10930202       0   101 ms
+atomone   cosmos  https://rpc.atomone.yourdomain.com      ok           10930202       0    75 ms
+```
+
+### 3. Run it every minute as its own user
+
+```bash
+sudo useradd --system --no-create-home --shell /usr/sbin/nologin rpcprober
+sudo install -d -o rpcprober -g rpcprober -m 755 /var/lib/node_exporter/textfile
+sudo cp rpc-prober/rpc-prober.service rpc-prober/rpc-prober.timer /etc/systemd/system/   # from this repo
+sudo systemctl daemon-reload && sudo systemctl enable --now rpc-prober.timer
+cat /var/lib/node_exporter/textfile/rpc.prom   # rpc_up, rpc_block_height, rpc_blocks_behind, rpc_latency_seconds
+```
+
+node-exporter in `docker-compose.yml` already reads `/var/lib/node_exporter/textfile`. If you run
+node_exporter as a system service instead, add `--collector.textfile.directory=/var/lib/node_exporter/textfile`.
+
+### 4. Turn on the alerts
+
+In `prometheus/rules/rpc.yml` replace `yourdomain\\.com` with your domain (only your own endpoints
+alert; the reference RPCs are only there for the comparison). Then:
+
+```bash
+docker compose restart node-exporter prometheus
+```
+
+To test: point one RPC in the config at a URL that does not exist under your domain; after 5 minutes
+you get `PublicRpcDown` in Telegram, and a "resolved" message once you put it back.
 
 ## Ports (defaults, all on 127.0.0.1)
 

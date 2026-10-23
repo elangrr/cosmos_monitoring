@@ -1,0 +1,15 @@
+# rpc-prober config. Copy to /etc/rpc-prober/config.toml.
+# Per chain: put your own RPC first, then 1-2 public RPCs of other operators as a reference height
+# (from the Cosmos chain registry). "blocks behind" is measured against the highest of them.
+timeout_ms = 5000
+concurrency = 16
+
+[[chain]]
+name = "atomone"
+type = "cosmos"          # cosmos | evm | tm2
+chain_id = "atomone-1"   # optional: an endpoint on another chain gets status wrong_chain
+rpcs = [
+  "https://rpc.atomone.yourdomain.com",
+  "https://atomone-rpc.allinbits.services",
+  "https://rpc-atomone.ecostake.com",
+]

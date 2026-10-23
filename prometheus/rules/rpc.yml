@@ -1,0 +1,30 @@
+# Public RPC alerts. Metrics come from rpc-prober (https://github.com/elangrr/rpc-prober)
+# through node-exporter's textfile collector. See "Watching your public RPCs" in README.md.
+# Only YOUR endpoints alert: replace yourdomain\\.com with your own domain (regex, keep the \\.).
+groups:
+  - name: rpc
+    rules:
+      - alert: PublicRpcDown
+        expr: rpc_up{endpoint=~"https://[^/]*yourdomain\\.com.*"} == 0
+        for: 5m
+        labels:
+          severity: major
+        annotations:
+          summary: "Public RPC down: {{ $labels.chain }}"
+          description: "{{ $labels.endpoint }} has not answered with a block height for 5 minutes."
+      - alert: PublicRpcBehind
+        expr: rpc_blocks_behind{endpoint=~"https://[^/]*yourdomain\\.com.*"} > 50
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Public RPC behind: {{ $labels.chain }}"
+          description: "{{ $labels.endpoint }} is {{ $value }} blocks behind the best reference RPC for 10 minutes."
+      - alert: RpcProberStale
+        expr: time() - node_textfile_mtime_seconds{file=~".*rpc.prom"} > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "rpc-prober has not written results for 5+ minutes"
+          description: "Check: systemctl status rpc-prober.timer rpc-prober.service"
